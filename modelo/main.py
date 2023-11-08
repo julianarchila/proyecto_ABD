@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # Read the dataset into a DataFrame
-df = pd.read_csv("fraud/card_transdata.csv")
+df = pd.read_csv("card_transdata.csv")
 
 # Display the first 5 rows of the DataFrame
 df.head()
