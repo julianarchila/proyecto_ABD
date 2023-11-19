@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # Read the dataset into a DataFrame
-df = pd.read_csv("card_transdata.csv")
+df = pd.read_csv("./card_transdata.csv")
 
 # Display the first 5 rows of the DataFrame
 df.head()
@@ -35,6 +35,9 @@ x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.30, random
 # Initialize and train a Logistic Regression classifier
 classifier = LogisticRegression(solver='liblinear')
 classifier.fit(x_train, y_train)
+
+coef = classifier.coef_[0]
+print ("Coeficientes: ", coef)
 
 # Make predictions on the test set
 y_predict = classifier.predict(x_test)
