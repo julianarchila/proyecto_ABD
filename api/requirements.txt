@@ -5,6 +5,8 @@ attrs==23.1.0
 click==8.1.7
 fastapi==0.104.1
 frozenlist==1.4.0
+geographiclib==2.0
+geopy==2.4.1
 greenlet==3.0.1
 h11==0.14.0
 httptools==0.6.1
