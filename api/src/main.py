@@ -97,12 +97,16 @@ def create_transaction(
 
     # Get last transaction
 
-    # db_last_transaction = session.exec(select(Transaction).where(Transaction.user_id == transaction.user_id).order_by(Transaction.id.desc())).first()
     db_last_transaction = session.exec(
         select(Transaction)
         .order_by(col(Transaction.id).desc())
-        .where(Transaction.user_id == transaction.user_id)
+        .where(Transaction.user_id == transaction.user_id, Transaction.fraud == False)
     ).first()
+
+    print("db_last_transaction", db_last_transaction)
+
+    
+
     distance_from_last_transaction = 0
     if db_last_transaction is not None:
         distance_from_last_transaction = distance_between_points(
@@ -125,7 +129,6 @@ def create_transaction(
 
     # Add parameters to transaction
 
-    fraud = predict_fraud(transaction)
 
     # db_transaction = Transaction.from_orm(transaction)
 
@@ -141,8 +144,12 @@ def create_transaction(
         repeat_retailer=repeat_retailer,
         distance_from_last_transaction=distance_from_last_transaction,
         ratio_to_median_purchase_price=ration_to_median_purchase_price,
-        fraud=fraud,
+        fraud=False,
     )
+
+    fraud = predict_fraud(db_transaction)
+
+    db_transaction.fraud = fraud
 
     # Update median purchase price
     db_user.transactions_count += 1
