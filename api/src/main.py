@@ -1,7 +1,10 @@
 from typing import List
 from fastapi import FastAPI, HTTPException, Depends
+from fastapi.middleware.cors import CORSMiddleware
 
 from sqlmodel import Session, select, col
+
+
 
 
 from .models import (
@@ -19,6 +22,15 @@ from .utils import predict_fraud, distance_between_points, string_to_tuple
 
 app = FastAPI()
 
+origins = ["*"]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 def get_session():
     with Session(engine) as session:
@@ -30,15 +42,16 @@ def on_startup():
     create_db_and_tables()
 
 
-@app.get("/")
-def read_root():
-    return {"Hello": "World"}
-
-
 @app.post("/users/", response_model=UserRead)
 def create_user(user: UserCreate, session: Session = Depends(get_session)):
     # Convert home_location to a string
     user.home_location = str(user.home_location[0]) + "," + str(user.home_location[1])
+
+
+    # Verify that the user does not already exist
+    db_user = session.exec(select(User).where(User.email == user.email)).first()
+    if db_user is not None:
+        raise HTTPException(status_code=400, detail="Email already registered")
 
     db_user = User.from_orm(user)
     session.add(db_user)
@@ -58,12 +71,12 @@ def login_user(user: UserLogin, session: Session = Depends(get_session)):
         raise HTTPException(status_code=400, detail="Incorrect email or password")
 
 
-@app.get("/transactions/", response_model=List[TransactionRead])
+""" @app.get("/transactions/", response_model=List[TransactionRead])
 def read_transactions(
     skip: int = 0, limit: int = 100, session: Session = Depends(get_session)
 ):
     transactions = session.exec(select(Transaction).offset(skip).limit(limit)).all()
-    return transactions
+    return transactions """
 
 
 # Get transactions for a specific user
@@ -74,6 +87,7 @@ def read_transactions_for_user(
     transactions = (
         session.exec(
             select(Transaction)
+            .order_by(col(Transaction.id).desc())
             .where(Transaction.user_id == user_id)
             .offset(skip)
             .limit(limit)
@@ -96,7 +110,6 @@ def create_transaction(
     )
 
     # Get last transaction
-
     db_last_transaction = session.exec(
         select(Transaction)
         .order_by(col(Transaction.id).desc())
@@ -117,10 +130,10 @@ def create_transaction(
     median_purchase_price = db_user.median_purchase_price
 
 
-    ration_to_median_purchase_price = transaction.price / median_purchase_price
+    ratio_to_median_purchase_price = transaction.price / median_purchase_price
 
     if (db_user.transactions_count == 0):
-        ration_to_median_purchase_price = 1
+        ratio_to_median_purchase_price = 1
 
     # Get repeat retailer if last retailer is the same as this retailer
     repeat_retailer = False
@@ -143,7 +156,7 @@ def create_transaction(
         distance_from_home=distance_from_home,
         repeat_retailer=repeat_retailer,
         distance_from_last_transaction=distance_from_last_transaction,
-        ratio_to_median_purchase_price=ration_to_median_purchase_price,
+        ratio_to_median_purchase_price=ratio_to_median_purchase_price,
         fraud=False,
     )
 

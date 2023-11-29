@@ -31,18 +31,12 @@ def predict_fraud(transaction:Transaction):
     :return: bool
     """
 
-    # TODO: Use our logistic regression model to predict if a transaction is fraud or not
 
     # Load the model
     with open('model.pkl', 'rb') as file:
         classifier = pickle.load(file)
 
 
-    # This is what x_columns looks like
-    # Index(['distance_from_home', 'distance_from_last_transaction',
-    #    'ratio_to_median_purchase_price', 'repeat_retailer', 'used_chip',
-    #    'used_pin_number', 'online_order'],
-    #   dtype='object')
 
     features = [ transaction.distance_from_home, transaction.distance_from_last_transaction, transaction.ratio_to_median_purchase_price, transaction.repeat_retailer, transaction.used_chip, transaction.used_pin_number, transaction.online_order ]
 
@@ -53,6 +47,8 @@ def predict_fraud(transaction:Transaction):
 
     # Make a prediction
     prediction = classifier.predict([features])[0]
+
+    print("API[UTILS] prediction: ",prediction)
 
     # Return the prediction
     if prediction == 0:
